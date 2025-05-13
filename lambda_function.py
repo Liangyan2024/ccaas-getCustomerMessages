@@ -17,7 +17,7 @@ def lambda_handler(event, context):
 
     contactFlow_messages = message_table.query(
         IndexName = 'ContactFlowID-index',
-        KeyConditionExpression = Key('ContactFlowName').eq(contactFlow_name)
+        KeyConditionExpression = Key('ContactFlowID').eq(contactFlow_ID)
     )
 
   
