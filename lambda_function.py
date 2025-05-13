@@ -4,20 +4,20 @@ import os
 from boto3.dynamodb.conditions import Key
 
 dynamodb = boto3.resource('dynamodb')
-message_table = dynamodb.Table('ccaas-customerMessage')
+message_table = dynamodb.Table('ccaas-customerMessages')
 connect = boto3.client('connect')
 connect_instance_id = os.environ.get('Amazon_Connect_Instance_ID')
 
 
 def lambda_handler(event, context):
+    print (f'received_event:', event)
+    contactFlow_name = event["Details"]["Parameters"].get('flowname')
 
-    contactFlow_ID = event['Details']['ContactData']['Attributes'].get('ContactFlowID')
-
-    print (f'current_contact_flow_ID: {contactFlow_ID}')
+    print (f'current_contact_flow_name: {contactFlow_name}')
 
     contactFlow_messages = message_table.query(
-        IndexName = 'ContactFlowID-index',
-        KeyConditionExpression = Key('ContactFlowID').eq(contactFlow_ID)
+        IndexName = 'ContactFlowName-index',
+        KeyConditionExpression = Key('ContactFlowName').eq(contactFlow_name)
     )
 
   
@@ -30,5 +30,7 @@ def lambda_handler(event, context):
     print (messages)
 
     return 
+
+
 
 
