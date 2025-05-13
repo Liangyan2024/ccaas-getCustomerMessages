@@ -4,7 +4,7 @@ import os
 from boto3.dynamodb.conditions import Key
 
 dynamodb = boto3.resource('dynamodb')
-message_table = dynamodb.Table('ccaas-customerMessages')
+message_table = dynamodb.Table('ccaas-customerMessage')
 connect = boto3.client('connect')
 connect_instance_id = os.environ.get('Amazon_Connect_Instance_ID')
 
