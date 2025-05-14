@@ -12,6 +12,9 @@ connect_instance_id = os.environ.get('Amazon_Connect_Instance_ID')
 def lambda_handler(event, context):
     print (f'received_event:', event)
     contactFlow_name = event["Details"]["Parameters"].get('flowname')
+     
+    attrs = event['Details']['ContactData']['Attributes']
+    language = attrs.get('language', 'en').lower()
 
     print (f'current_contact_flow_name: {contactFlow_name}')
 
@@ -25,11 +28,14 @@ def lambda_handler(event, context):
 
     for message in contactFlow_messages['Items']:
         if message.get('MessageID'):
-            messages[message.get('MessageID')] = {'en_message': message.get('EnglishText', ''), 'fr_message': message.get('FrenchText', '')}
+            if language == 'en':
+                messages[message.get('MessageID')] = message.get('EnglishText', '')
+            else:
+                messages[message.get('MessageID')] = message.get('FrenchText', '')
 
     print (messages)
 
-    return 
+    return messages
 
 
 
