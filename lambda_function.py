@@ -10,66 +10,56 @@ connect_instance_id = os.environ.get('Amazon_Connect_Instance_ID')
 
 
 def lambda_handler(event, context):
-    print (f'received_event:', event)
-    contactFlow_name = event["Details"]["Parameters"].get('flowname')
-     
-    attrs = event['Details']['ContactData']['Attributes']
-    language = attrs.get('language', 'en').lower()
-    
-    contact_id = event['Details']['ContactData'].get('ContactId')
-    
+    try:
+        contactFlow_name = event["Details"]["Parameters"].get('flowname')
+        attrs = event['Details']['ContactData']['Attributes']
+        language = attrs.get('language', 'en').lower()
+        contact_id = event['Details']['ContactData'].get('ContactId')
 
+        clear_existing_m_attributes(connect_instance_id, contact_id, attrs)
 
-    print (f'current_contact_flow_name: {contactFlow_name}')
+        contactFlow_messages = message_table.query(
+            IndexName='ContactFlowName-index',
+            KeyConditionExpression=Key('ContactFlowName').eq(contactFlow_name)
+        )
 
-    contactFlow_messages = message_table.query(
-        IndexName = 'ContactFlowName-index',
-        KeyConditionExpression = Key('ContactFlowName').eq(contactFlow_name)
-    )
+        messages = {}
+        for message in contactFlow_messages['Items']:
+            msg_id = message.get('MessageID')
+            if msg_id:
+                key = f"m_{msg_id}"
+                text = message.get('EnglishText', '') if language == 'en' else message.get('FrenchText', '')
+                messages[key] = text
 
-    clear_existing_m_attributes(connect_instance_id, contact_id, attrs)
+        if messages:
+            connect.update_contact_attributes(
+                InstanceId=connect_instance_id,
+                InitialContactId=contact_id,
+                Attributes=messages
+            )
 
-  
-    messages = {}
+        return {
+            "statusCode": 200
+        }
 
-    for message in contactFlow_messages['Items']:
-        if message.get('MessageID'):
-            if language == 'en':
-                messages[f"m_{message.get('MessageID')}"] = message.get('EnglishText', '')
-            else:
-                messages[f"m_{message.get('MessageID')}"]  = message.get('FrenchText', '')
-
-    print (messages)
-    
-    if messages:
-        connect.update_contact_attributes(
-        InstanceId=connect_instance_id,
-        InitialContactId=contact_id,
-        Attributes=messages
-        )   
-    
-    return  {
-        "statusCode": 200
-    }
+    except Exception as e:
+        print(f"Lambda failed with error: {e}")
+        return {
+            "statusCode": 500,
+            "error": str(e)
+        }
 
 
 def clear_existing_m_attributes(instanceID, contactID, attributes):
-
-    m_attributes = {}
-
-    for item in attributes:
-        if item.startswith('m_'):
-            m_attributes[item] = ''
+    m_attributes = {k: '' for k in attributes if k.startswith('m_')}
 
     if m_attributes:
         connect.update_contact_attributes(
-        InstanceId=instanceID,
-        InitialContactId=contactID,
-        Attributes=m_attributes
+            InstanceId=instanceID,
+            InitialContactId=contactID,
+            Attributes=m_attributes
         )
 
     return {
         "statusCode": 200
     }
-
-
