@@ -13,7 +13,7 @@ def lambda_handler(event, context):
     try:
         contactFlow_name = event["Details"]["Parameters"].get('flowname')
         attrs = event['Details']['ContactData']['Attributes']
-        language = attrs.get('language', 'en').lower()
+        language = attrs.get('language', 'en').lower()[:2]
         contact_id = event['Details']['ContactData'].get('ContactId')
 
         clear_existing_m_attributes(connect_instance_id, contact_id, attrs)
