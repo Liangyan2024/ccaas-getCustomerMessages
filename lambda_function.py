@@ -1,6 +1,7 @@
 import json
 import boto3
 import os
+import re
 from boto3.dynamodb.conditions import Key
 
 dynamodb = boto3.resource('dynamodb')
@@ -29,7 +30,16 @@ def lambda_handler(event, context):
             if msg_id:
                 key = f"m_{msg_id}"
                 text = message.get('EnglishText', '') if language == 'en' else message.get('FrenchText', '')
-                messages[key] = text
+                pattern = r"\$\.Attributes\.(\w+)"
+                key_list = []
+                key_list = re.findall(pattern, text)
+                if key_list:
+                    for key_item in key_list:
+                        key_value = attrs.get (key_item, 'Missing_Value')
+                        if key_value and key_value != 'Missing_Value':
+                            text = text.replace(f"$.Attributes.{key_item}",key_value)
+                    messages[key] = text
+                
 
         if messages:
             connect.update_contact_attributes(
@@ -63,3 +73,10 @@ def clear_existing_m_attributes(instanceID, contactID, attributes):
     return {
         "statusCode": 200
     }
+
+
+
+def replace_Attribute_Key_To_Value (old_message_text, key_list, contact_attributes):
+    for key_item in key_list:
+
+
