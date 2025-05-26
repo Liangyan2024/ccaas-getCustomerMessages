@@ -75,8 +75,3 @@ def clear_existing_m_attributes(instanceID, contactID, attributes):
     }
 
 
-
-def replace_Attribute_Key_To_Value (old_message_text, key_list, contact_attributes):
-    for key_item in key_list:
-
-
