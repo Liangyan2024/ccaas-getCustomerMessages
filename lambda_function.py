@@ -30,6 +30,7 @@ def lambda_handler(event, context):
             if msg_id:
                 key = f"m_{msg_id}"
                 text = message.get('EnglishText', '') if language == 'en' else message.get('FrenchText', '')
+                text = text.strip('"')
                 pattern = r"\$\.Attributes\.(\w+)"
                 key_list = []
                 key_list = re.findall(pattern, text)
